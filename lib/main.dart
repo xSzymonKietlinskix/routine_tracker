@@ -3,8 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'screens/settings_screen.dart';
+import 'models/task.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(TaskAdapter());
+  await Hive.openBox<Task>('tasks'); // Open db
+
   runApp(MyApp());
 }
 
@@ -28,7 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static final List<Widget> _screens = [
     CalendarScreen(),
-    TasksScreen(),
+    TaskListScreen(),
     SettingsScreen(),
   ];
 
