@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 import '../models/task.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-class addTask extends StatefulWidget {
-  const addTask({super.key});
+class AddTaskScreen extends StatefulWidget {
+  const AddTaskScreen({super.key});
   @override
-  _addTask createState() => _addTask();
+  _AddTaskScreen createState() => _AddTaskScreen();
 }
 
-class _addTask extends State<addTask> {
+class _AddTaskScreen extends State<AddTaskScreen> {
   final _nameController = TextEditingController();
   bool _recurring = false;
-  DateTime? _date = DateTime.now();
-  List<int>? _daysOfWeek = [];
+  DateTime? _date;
+  List<int>? _daysOfWeek = []; // Days of the week (1 = Monday, 7 = Sunday)
   TimeOfDay? _time;
   bool _isCompleted = false;
+  int? _recurringMonths; // Number of months the task should repeat
 
   void _saveTask() async {
+    // Jeśli zadanie jest powtarzające się, generujemy je na konkretne daty
     final newTask = Task(
       name: _nameController.text,
       recurring: _recurring,
@@ -24,10 +26,29 @@ class _addTask extends State<addTask> {
       daysOfWeek: _daysOfWeek,
       time: _time,
       isCompleted: _isCompleted,
+      recurringMonths: _recurringMonths,
     );
 
     var box = await Hive.openBox<Task>('tasks');
-    await box.add(newTask);
+
+    if (_recurring && _recurringMonths != null) {
+      // Generowanie zadań na kolejne miesiące
+      List<DateTime> recurringDates = newTask.generateRecurringTasks();
+      for (DateTime taskDate in recurringDates) {
+        var task = Task(
+          name: newTask.name,
+          recurring: false,
+          date: taskDate,
+          time: newTask.time,
+          isCompleted: newTask.isCompleted,
+          streak: newTask.streak,
+        );
+        await box.add(task); // Dodajemy każde wygenerowane zadanie
+      }
+    } else {
+      await box.add(
+          newTask); // Dodajemy jedno zadanie, jeśli nie jest powtarzające się
+    }
 
     // Po zapisaniu zadania wracamy do poprzedniego ekranu
     Navigator.pop(context);
@@ -82,6 +103,38 @@ class _addTask extends State<addTask> {
                     },
                   );
                 }),
+              ),
+              Text("Repeat for how many months?"),
+              TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    _recurringMonths = int.tryParse(value);
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: "Months",
+                  hintText: "Enter number of months",
+                ),
+              ),
+              ListTile(
+                title: Text("Starting date"),
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2025, 12, 31),
+                  );
+                  if (pickedDate != null) {
+                    setState(() {
+                      _date = pickedDate;
+                    });
+                  }
+                },
+                trailing: Text(_date != null
+                    ? "${_date!.toLocal()}".split(' ')[0]
+                    : "Pick Date"),
               ),
             ] else ...[
               // Jeśli zadanie nie jest cykliczne, wybieramy datę

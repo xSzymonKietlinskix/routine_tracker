@@ -10,7 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
-  await Hive.deleteBoxFromDisk('tasks');
+  // await Hive.deleteBoxFromDisk('tasks');
 
   await Hive.openBox<Task>('tasks'); // Open db
 
@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static final List<Widget> _screens = [
     CalendarScreen(),
-    TaskListScreen(),
+    // TaskListScreen(),
     SettingsScreen(),
   ];
 
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
               icon: Icon(Icons.calendar_today), label: 'Calendar'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
+          //BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
           BottomNavigationBarItem(
               icon: Icon(Icons.settings), label: 'Settings'),
         ],
