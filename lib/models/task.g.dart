@@ -17,13 +17,13 @@ class TaskAdapter extends TypeAdapter<Task> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Task(
-      title: fields[0] as String,
-      description: fields[1] as String,
-      type: fields[2] as String,
-      date: fields[3] as String?,
-      daysOfWeek: (fields[4] as List?)?.cast<int>(),
-      time: fields[5] as String?,
+      name: fields[0] as String,
+      recurring: fields[1] as bool,
+      date: fields[2] as DateTime?,
+      daysOfWeek: (fields[3] as List?)?.cast<int>(),
+      time: fields[4] as TimeOfDay?,
       streak: fields[6] as int,
+      isCompleted: fields[5] as bool,
     );
   }
 
@@ -32,17 +32,17 @@ class TaskAdapter extends TypeAdapter<Task> {
     writer
       ..writeByte(7)
       ..writeByte(0)
-      ..write(obj.title)
+      ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.description)
+      ..write(obj.recurring)
       ..writeByte(2)
-      ..write(obj.type)
-      ..writeByte(3)
       ..write(obj.date)
-      ..writeByte(4)
+      ..writeByte(3)
       ..write(obj.daysOfWeek)
-      ..writeByte(5)
+      ..writeByte(4)
       ..write(obj.time)
+      ..writeByte(5)
+      ..write(obj.isCompleted)
       ..writeByte(6)
       ..write(obj.streak);
   }

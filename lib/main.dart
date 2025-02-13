@@ -6,10 +6,12 @@ import 'screens/settings_screen.dart';
 import 'models/task.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
+  await Hive.deleteBoxFromDisk('tasks');
+
   await Hive.openBox<Task>('tasks'); // Open db
 
   runApp(MyApp());

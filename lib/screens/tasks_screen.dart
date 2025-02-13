@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/task.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../widgets/task_list.dart';
+import 'add_task_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   @override
@@ -11,72 +13,66 @@ class TaskListScreen extends StatefulWidget {
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
-  final HiveDb hiveDb = HiveDb(); // Inicjalizujemy bazę
+  DateTime selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Lista Zadań")),
-      body: ValueListenableBuilder(
-        valueListenable: Hive.box<Task>('tasks').listenable(),
-        builder: (context, Box<Task> box, _) {
-          List<Task> tasks = hiveDb.getTasks();
-
-          if (tasks.isEmpty) {
-            return Center(child: Text("Brak zadań"));
-          }
-
-          return ListView.builder(
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              Task task = tasks[index];
-              return ListTile(
-                title: Text(task.title),
-                subtitle: Text(task.description),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteTask(index),
+      appBar: AppBar(title: Text("Kalendarz")),
+      body: Column(
+        children: [
+          // **Nagłówek z wyborem dnia**
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_left),
+                  onPressed: () {
+                    setState(() {
+                      selectedDate = selectedDate.subtract(Duration(days: 1));
+                    });
+                  },
                 ),
-                onTap: () => _editTask(index, task),
-              );
-            },
-          );
-        },
+                Text(
+                    "${selectedDate.day}-${selectedDate.month}-${selectedDate.year}",
+                    style: TextStyle(fontSize: 20)),
+                IconButton(
+                  icon: Icon(Icons.arrow_right),
+                  onPressed: () {
+                    setState(() {
+                      selectedDate = selectedDate.add(Duration(days: 1));
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // **Osadzamy nasz widżet TaskList w Kontenerze**
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TaskList(selectedDate: selectedDate),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addTask,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => addTask()),
+          );
+        },
         child: Icon(Icons.add),
+        backgroundColor: const Color.fromARGB(255, 135, 16, 141),
       ),
     );
-  }
-
-  void _addTask() async {
-    Task newTask = Task(
-      title: "Nowe Zadanie",
-      description: "Opis zadania",
-      type: "single",
-    );
-    await hiveDb.addTask(newTask);
-    setState(() {}); // Odśwież widok
-  }
-
-  void _deleteTask(int index) async {
-    await hiveDb.deleteTask(index);
-    setState(() {}); // Odśwież listę po usunięciu
-  }
-
-  void _editTask(int index, Task task) async {
-    Task updatedTask = Task(
-      title: "${task.title} (Edytowane)",
-      description: task.description,
-      type: task.type,
-      date: task.date,
-      daysOfWeek: task.daysOfWeek,
-      time: task.time,
-      streak: task.streak + 1, // Przykładowa edycja
-    );
-
-    await hiveDb.updateTask(index, updatedTask);
-    setState(() {}); // Odśwież widok
   }
 }
