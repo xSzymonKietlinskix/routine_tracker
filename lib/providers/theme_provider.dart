@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.system; // Domyślnie tryb systemowy
+  ThemeMode _themeMode = ThemeMode.light;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -14,15 +15,25 @@ class ThemeProvider extends ChangeNotifier {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool("isDarkMode", isDark);
+    // Zapisz motyw w Firebase
+    await _firestore.collection('settings').doc('theme').set({
+      'isDarkMode': isDark,
+    });
   }
 
   void _loadTheme() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool? isDarkMode = prefs.getBool("isDarkMode");
-    if (isDarkMode != null) {
-      _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    // Pobierz motyw z Firebase
+    try {
+      DocumentSnapshot docSnapshot = await _firestore.collection('settings').doc('theme').get();
+
+      if (docSnapshot.exists) {
+        bool isDarkMode = docSnapshot['isDarkMode'] ?? false;
+        _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+        notifyListeners();
+      }
+    } catch (e) {
+      // Jeśli wystąpił błąd, możesz ustawić domyślny motyw
+      _themeMode = ThemeMode.light;
       notifyListeners();
     }
   }

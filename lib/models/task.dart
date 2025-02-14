@@ -1,33 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 
-part 'task.g.dart';
-
-@HiveType(typeId: 0)
 class Task {
-  @HiveField(0)
   String name;
-
-  @HiveField(1)
   bool recurring;
-
-  @HiveField(2)
   DateTime? date;
-
-  @HiveField(3)
-  List<int>? daysOfWeek; // List of days of the week (1 = Monday, 7 = Sunday)
-
-  @HiveField(4)
+  List<int>? daysOfWeek;
   TimeOfDay? time;
-
-  @HiveField(5)
   bool isCompleted;
-
-  @HiveField(6)
   int streak;
-
-  @HiveField(7)
-  int? recurringMonths; // Number of months the task repeats
+  int? recurringMonths;
 
   Task({
     required this.name,
@@ -40,15 +22,31 @@ class Task {
     this.recurringMonths,
   });
 
-  bool isForDate(DateTime selectedDate) {
-    if (date != null && !recurring) {
-      return date!.year == selectedDate.year &&
-          date!.month == selectedDate.month &&
-          date!.day == selectedDate.day;
-    } else if (daysOfWeek != null && recurring) {
-      return daysOfWeek!.contains(selectedDate.weekday);
-    }
-    return false;
+  factory Task.fromMap(Map<String, dynamic> map) {
+    return Task(
+      name: map['name'],
+      recurring: map['recurring'],
+      date: (map['date'] as Timestamp?)?.toDate(),
+      daysOfWeek: List<int>.from(map['daysOfWeek'] ?? []),
+      time: map['time'] != null
+          ? TimeOfDay(hour: map['time'].hour, minute: map['time'].minute)
+          : null,
+      isCompleted: map['isCompleted'],
+      streak: map['streak'],
+      recurringMonths: map['recurringMonths'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'recurring': recurring,
+      'date': date != null ? Timestamp.fromDate(date!) : null,
+      'time':
+          time != null ? {'hour': time!.hour, 'minute': time!.minute} : null,
+      'isCompleted': isCompleted,
+      'streak': streak,
+    };
   }
 
   List<DateTime> generateRecurringTasks() {
@@ -59,14 +57,16 @@ class Task {
 
       for (int i = 0; i < recurringMonths!; i++) {
         DateTime monthStart = DateTime(startDate.year, startDate.month + i, 1);
+        if (i == 0) {
+          monthStart = DateTime(startDate.year, startDate.month, startDate.day);
+        }
 
         for (int dayOfWeek in daysOfWeek!) {
-          DateTime nextDayOfWeek =
-              _getNextDayOfWeekInMonth(monthStart, dayOfWeek);
-
+          DateTime nextDayOfWeek = _getNextDayOfWeek(monthStart, dayOfWeek);
           while (nextDayOfWeek.month == monthStart.month) {
             generatedDates.add(nextDayOfWeek);
-            nextDayOfWeek = nextDayOfWeek.add(Duration(days: 7));
+            nextDayOfWeek = nextDayOfWeek.add(Duration(
+                days: 7)); // Dodajemy kolejne wystąpienie w tym miesiącu
           }
         }
       }
@@ -75,13 +75,12 @@ class Task {
     return generatedDates;
   }
 
-  DateTime _getNextDayOfWeekInMonth(DateTime startOfMonth, int targetWeekday) {
-    DateTime firstDayOfMonth =
-        DateTime(startOfMonth.year, startOfMonth.month, 1);
-
-    int daysToAdd = (targetWeekday - firstDayOfMonth.weekday + 7) % 7;
-    DateTime firstTargetDay = firstDayOfMonth.add(Duration(days: daysToAdd));
-
-    return firstTargetDay;
+  DateTime _getNextDayOfWeek(DateTime startOfMonth, int targetWeekday) {
+    int daysToAdd = (targetWeekday - startOfMonth.weekday + 7) % 7;
+    // Jeśli obliczona data jest wstecz, to bierzemy kolejny tydzień
+    if (daysToAdd == 0) {
+      daysToAdd = 7;
+    }
+    return startOfMonth.add(Duration(days: daysToAdd));
   }
 }
