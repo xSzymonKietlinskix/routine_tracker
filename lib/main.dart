@@ -5,6 +5,8 @@ import 'screens/tasks_screen.dart';
 import 'screens/settings_screen.dart';
 import 'models/task.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'providers/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,15 +16,27 @@ void main() async {
 
   await Hive.openBox<Task>('tasks'); // Open db
 
-  runApp(MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Routine Tracker',
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: themeProvider.themeMode, // Ustawiamy motyw
+          home: HomeScreen(),
+        );
+      },
     );
   }
 }

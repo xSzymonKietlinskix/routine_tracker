@@ -55,23 +55,18 @@ class Task {
     List<DateTime> generatedDates = [];
 
     if (recurringMonths != null && recurringMonths! > 0 && daysOfWeek != null) {
-      DateTime startDate = DateTime.now(); // Rozpoczynamy od dzisiejszej daty
+      DateTime startDate = DateTime.now();
 
       for (int i = 0; i < recurringMonths!; i++) {
-        // Dla każdego miesiąca
         DateTime monthStart = DateTime(startDate.year, startDate.month + i, 1);
 
-        // Generujemy daty dla każdego dnia tygodnia w miesiącu
         for (int dayOfWeek in daysOfWeek!) {
-          // Generujemy daty dla każdego tygodnia w miesiącu
           DateTime nextDayOfWeek =
               _getNextDayOfWeekInMonth(monthStart, dayOfWeek);
 
-          // Generujemy wszystkie dni w tygodniu w danym miesiącu
           while (nextDayOfWeek.month == monthStart.month) {
             generatedDates.add(nextDayOfWeek);
-            nextDayOfWeek = nextDayOfWeek
-                .add(Duration(days: 7)); // Dodajemy kolejny tydzień
+            nextDayOfWeek = nextDayOfWeek.add(Duration(days: 7));
           }
         }
       }
@@ -81,11 +76,9 @@ class Task {
   }
 
   DateTime _getNextDayOfWeekInMonth(DateTime startOfMonth, int targetWeekday) {
-    // Szukamy pierwszego dnia tygodnia (poniedziałek, wtorek, itd.) w danym miesiącu
     DateTime firstDayOfMonth =
         DateTime(startOfMonth.year, startOfMonth.month, 1);
 
-    // Obliczamy, ile dni musimy dodać, aby dotrzeć do pierwszego wystąpienia szukanego dnia tygodnia
     int daysToAdd = (targetWeekday - firstDayOfMonth.weekday + 7) % 7;
     DateTime firstTargetDay = firstDayOfMonth.add(Duration(days: daysToAdd));
 
