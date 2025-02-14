@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../db/firestore_db.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
+  
   @override
   _AddTaskScreen createState() => _AddTaskScreen();
 }
@@ -11,14 +12,17 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreen extends State<AddTaskScreen> {
   final _nameController = TextEditingController();
   bool _recurring = false;
-  DateTime? _date;
-  List<int>? _daysOfWeek = []; // Days of the week (1 = Monday, 7 = Sunday)
+  DateTime? _date;  // Data dla pojedynczego zadania
+  List<int>? _daysOfWeek = []; // Dni tygodnia (1 = poniedziałek, 7 = niedziela)
   TimeOfDay? _time;
   bool _isCompleted = false;
-  int? _recurringMonths; // Number of months the task should repeat
+  int? _recurringMonths; // Liczba miesięcy, przez które zadanie ma się powtarzać
+
+  // Utwórz obiekt FirestoreDb do dodawania zadań
+  final FirestoreDb firestoreDb = FirestoreDb();
 
   void _saveTask() async {
-    // Jeśli zadanie jest powtarzające się, generujemy je na konkretne daty
+    // Tworzymy nowe zadanie
     final newTask = Task(
       name: _nameController.text,
       recurring: _recurring,
@@ -28,8 +32,6 @@ class _AddTaskScreen extends State<AddTaskScreen> {
       isCompleted: _isCompleted,
       recurringMonths: _recurringMonths,
     );
-
-    var box = await Hive.openBox<Task>('tasks');
 
     if (_recurring && _recurringMonths != null) {
       // Generowanie zadań na kolejne miesiące
@@ -43,15 +45,23 @@ class _AddTaskScreen extends State<AddTaskScreen> {
           isCompleted: newTask.isCompleted,
           streak: newTask.streak,
         );
-        await box.add(task); // Dodajemy każde wygenerowane zadanie
+        await firestoreDb.addTask(task); // Dodajemy każde wygenerowane zadanie
       }
     } else {
-      await box.add(
-          newTask); // Dodajemy jedno zadanie, jeśli nie jest powtarzające się
+      await firestoreDb.addTask(newTask); // Dodajemy jedno zadanie, jeśli nie jest powtarzające się
     }
 
     // Po zapisaniu zadania wracamy do poprzedniego ekranu
     Navigator.pop(context);
+  }
+
+  DateTime _getNextDayOfWeek(DateTime from, int dayOfWeek) {
+    int daysToAdd = (dayOfWeek - from.weekday + 7) % 7;
+    // Jeżeli obliczona data jest wstecz, to bierzemy kolejny tydzień
+    if (daysToAdd == 0) {
+      daysToAdd = 7;
+    }
+    return from.add(Duration(days: daysToAdd));
   }
 
   @override
@@ -82,15 +92,7 @@ class _AddTaskScreen extends State<AddTaskScreen> {
               Wrap(
                 children: List.generate(7, (index) {
                   return ChoiceChip(
-                    label: Text([
-                      "Mon",
-                      "Tue",
-                      "Wed",
-                      "Thu",
-                      "Fri",
-                      "Sat",
-                      "Sun"
-                    ][index]),
+                    label: Text(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]),
                     selected: _daysOfWeek!.contains(index + 1),
                     onSelected: (isSelected) {
                       setState(() {
@@ -117,47 +119,25 @@ class _AddTaskScreen extends State<AddTaskScreen> {
                   hintText: "Enter number of months",
                 ),
               ),
-              ListTile(
-                title: Text("Starting date"),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2025, 12, 31),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _date = pickedDate;
-                    });
-                  }
-                },
-                trailing: Text(_date != null
-                    ? "${_date!.toLocal()}".split(' ')[0]
-                    : "Pick Date"),
-              ),
-            ] else ...[
-              // Jeśli zadanie nie jest cykliczne, wybieramy datę
-              ListTile(
-                title: Text("Select Date"),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2025, 12, 31),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _date = pickedDate;
-                    });
-                  }
-                },
-                trailing: Text(_date != null
-                    ? "${_date!.toLocal()}".split(' ')[0]
-                    : "Pick Date"),
-              ),
             ],
+            ListTile(
+              title: Text("Select Date"),
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2025, 12, 31),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _date = pickedDate;
+                  });
+                }
+              },
+              trailing:
+                  Text(_date != null ? "${_date!.toLocal()}".split(' ')[0] : "Pick Date"),
+            ),
             ListTile(
               title: Text("Select Time"),
               onTap: () async {

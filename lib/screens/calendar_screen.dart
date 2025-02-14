@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:routine_tracker/screens/tasks_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:intl/date_symbol_data_local.dart';
 import 'add_task_screen.dart';
 import '../widgets/task_list.dart';
 import '../models/task.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../db/firestore_db.dart';
 
 class CalendarScreen extends StatefulWidget {
+  const CalendarScreen({super.key});
+
   @override
   _CalendarScreenState createState() => _CalendarScreenState();
 }
@@ -19,24 +17,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDay = DateTime.now();
   ValueNotifier<Map<DateTime, List<Task>>> _tasksByDate = ValueNotifier({});
 
+  final FirestoreDb firestoreDb = FirestoreDb();
+
   @override
   void initState() {
     super.initState();
     _loadTasks();
-    Hive.box<Task>('tasks').listenable().addListener(_loadTasks);
   }
 
-  @override
-  void dispose() {
-    Hive.box<Task>('tasks').listenable().removeListener(_loadTasks);
-    super.dispose();
-  }
-
-  void _loadTasks() {
-    final box = Hive.box<Task>('tasks');
+  void _loadTasks() async {
+    final tasks = await firestoreDb.getTasks();
     Map<DateTime, List<Task>> newTasksByDate = {};
 
-    for (var task in box.values) {
+    for (var task in tasks) {
       if (task.date != null && !task.recurring) {
         DateTime taskDate = DateTime(
           task.date!.year,
@@ -67,7 +60,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
 
     // Dodatkowo sprawdzamy, czy mamy zadania cykliczne, które przypadają na dany dzień tygodnia
-    for (var task in Hive.box<Task>('tasks').values) {
+    for (var task in _tasksByDate.value.values.expand((taskList) => taskList)) {
       if (task.recurring &&
           task.daysOfWeek != null &&
           task.daysOfWeek!.contains(day.weekday)) {
@@ -89,7 +82,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               flexibleSpace: FlexibleSpaceBar(
                 background: Padding(
                   padding: EdgeInsets.all(8.0),
-                  child: ValueListenableBuilder<Map<DateTime, List<Task>>>(
+                  child: ValueListenableBuilder<Map<DateTime, List<Task>>>( 
                     valueListenable: _tasksByDate,
                     builder: (context, tasksByDate, _) {
                       return TableCalendar(
