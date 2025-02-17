@@ -4,7 +4,7 @@ import '../db/firestore_db.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
-  
+
   @override
   _AddTaskScreen createState() => _AddTaskScreen();
 }
@@ -12,11 +12,12 @@ class AddTaskScreen extends StatefulWidget {
 class _AddTaskScreen extends State<AddTaskScreen> {
   final _nameController = TextEditingController();
   bool _recurring = false;
-  DateTime? _date;  // Data dla pojedynczego zadania
+  DateTime? _date; // Data dla pojedynczego zadania
   List<int>? _daysOfWeek = []; // Dni tygodnia (1 = poniedziałek, 7 = niedziela)
   TimeOfDay? _time;
   bool _isCompleted = false;
-  int? _recurringMonths; // Liczba miesięcy, przez które zadanie ma się powtarzać
+  int?
+      _recurringMonths; // Liczba miesięcy, przez które zadanie ma się powtarzać
 
   // Utwórz obiekt FirestoreDb do dodawania zadań
   final FirestoreDb firestoreDb = FirestoreDb();
@@ -39,7 +40,7 @@ class _AddTaskScreen extends State<AddTaskScreen> {
       for (DateTime taskDate in recurringDates) {
         var task = Task(
           name: newTask.name,
-          recurring: false,
+          recurring: true,
           date: taskDate,
           time: newTask.time,
           isCompleted: newTask.isCompleted,
@@ -48,7 +49,8 @@ class _AddTaskScreen extends State<AddTaskScreen> {
         await firestoreDb.addTask(task); // Dodajemy każde wygenerowane zadanie
       }
     } else {
-      await firestoreDb.addTask(newTask); // Dodajemy jedno zadanie, jeśli nie jest powtarzające się
+      await firestoreDb.addTask(
+          newTask); // Dodajemy jedno zadanie, jeśli nie jest powtarzające się
     }
 
     // Po zapisaniu zadania wracamy do poprzedniego ekranu
@@ -92,7 +94,15 @@ class _AddTaskScreen extends State<AddTaskScreen> {
               Wrap(
                 children: List.generate(7, (index) {
                   return ChoiceChip(
-                    label: Text(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]),
+                    label: Text([
+                      "Mon",
+                      "Tue",
+                      "Wed",
+                      "Thu",
+                      "Fri",
+                      "Sat",
+                      "Sun"
+                    ][index]),
                     selected: _daysOfWeek!.contains(index + 1),
                     onSelected: (isSelected) {
                       setState(() {
@@ -135,25 +145,26 @@ class _AddTaskScreen extends State<AddTaskScreen> {
                   });
                 }
               },
-              trailing:
-                  Text(_date != null ? "${_date!.toLocal()}".split(' ')[0] : "Pick Date"),
+              trailing: Text(_date != null
+                  ? "${_date!.toLocal()}".split(' ')[0]
+                  : "Pick Date"),
             ),
-            ListTile(
-              title: Text("Select Time"),
-              onTap: () async {
-                TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (pickedTime != null) {
-                  setState(() {
-                    _time = pickedTime;
-                  });
-                }
-              },
-              trailing:
-                  Text(_time != null ? _time!.format(context) : "Pick Time"),
-            ),
+            // ListTile(
+            //   title: Text("Select Time"),
+            //   onTap: () async {
+            //     TimeOfDay? pickedTime = await showTimePicker(
+            //       context: context,
+            //       initialTime: TimeOfDay.now(),
+            //     );
+            //     if (pickedTime != null) {
+            //       setState(() {
+            //         _time = pickedTime;
+            //       });
+            //     }
+            //   },
+            //   trailing:
+            //       Text(_time != null ? _time!.format(context) : "Pick Time"),
+            // ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveTask,
