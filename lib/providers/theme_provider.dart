@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:developer' as developer;
 
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
@@ -11,28 +13,51 @@ class ThemeProvider extends ChangeNotifier {
     _loadTheme(); // Ładujemy zapisany motyw przy starcie aplikacji
   }
 
-  void toggleTheme(bool isDark) async {
+  Future<void> toggleTheme(bool isDark) async {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
 
-    // Zapisz motyw w Firebase
-    await _firestore.collection('settings').doc('theme').set({
-      'isDarkMode': isDark,
-    });
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      String userId = currentUser.uid; // Poprawione pobranie UID użytkownika
+
+      try {
+        await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('settings')
+            .doc('theme')
+            .set({
+          'isDarkMode': isDark,
+        });
+      } catch (e) {
+        developer.log("Error while saving theme: $e", name: "ThemeProvider");
+      }
+    }
   }
 
-  void _loadTheme() async {
-    // Pobierz motyw z Firebase
-    try {
-      DocumentSnapshot docSnapshot = await _firestore.collection('settings').doc('theme').get();
+  Future<void> _loadTheme() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
 
-      if (docSnapshot.exists) {
-        bool isDarkMode = docSnapshot['isDarkMode'] ?? false;
+    String userId = currentUser.uid; // Poprawione pobranie UID użytkownika
+
+    try {
+      DocumentSnapshot docSnapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('settings')
+          .doc('theme')
+          .get();
+
+      if (docSnapshot.exists && docSnapshot.data() != null) {
+        bool isDarkMode =
+            (docSnapshot.data() as Map<String, dynamic>)['isDarkMode'] ?? false;
         _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
         notifyListeners();
       }
     } catch (e) {
-      // Jeśli wystąpił błąd, możesz ustawić domyślny motyw
+      developer.log("Error while loading theme: $e", name: "ThemeProvider");
       _themeMode = ThemeMode.light;
       notifyListeners();
     }
