@@ -57,14 +57,6 @@ class _AddTaskScreen extends State<AddTaskScreen> {
     Navigator.pop(context);
   }
 
-  DateTime _getNextDayOfWeek(DateTime from, int dayOfWeek) {
-    int daysToAdd = (dayOfWeek - from.weekday + 7) % 7;
-    // Jeżeli obliczona data jest wstecz, to bierzemy kolejny tydzień
-    if (daysToAdd == 0) {
-      daysToAdd = 7;
-    }
-    return from.add(Duration(days: daysToAdd));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +130,7 @@ class _AddTaskScreen extends State<AddTaskScreen> {
                   initialDate: DateTime.now(),
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2025, 12, 31),
+                  locale: Locale("pl"),
                 );
                 if (pickedDate != null) {
                   setState(() {

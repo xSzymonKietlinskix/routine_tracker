@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
 import '../db/firestore_db.dart';
+import '../widgets/chart.dart';
+import '../widgets/streak_list.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({Key? key}) : super(key: key);
@@ -62,39 +64,6 @@ class _StatsScreenState extends State<StatsScreen> {
     return spots;
   }
 
-  // Funkcja do obliczenia steak zadania
-  int _calculateStreak(Task task) {
-    int streak = 0;
-    DateTime currentDate = DateTime.now();
-    List<Task> recurringTasks = [];
-    for (var t in tasks) {
-      if (t.name == task.name && t.recurring) {
-        recurringTasks.add(t);
-      }
-    }
-
-    recurringTasks.sort((a, b) {
-      int dateComparison = a.date!.compareTo(b.date!);
-      if (dateComparison != 0) {
-        return dateComparison; // Sortowanie po dacie
-      }
-      return b.isCompleted ? 1 : 0 - (a.isCompleted ? 1 : 0);
-    });
-
-    for (var t in recurringTasks) {
-      if (t.date!.isAfter(DateTime.now())) {
-        break;
-      }
-      if (t.isCompleted) {
-        streak += 1;
-      } else if (t.date!.isBefore(DateTime.now())) {
-        streak = 0;
-      }
-    }
-
-    return streak;
-  }
-
   Future<void> findUniqueTasks() async {
     Set<String> seenNames = {}; // Zbiór do śledzenia nazw
     List<Task> buffor = [];
@@ -111,58 +80,57 @@ class _StatsScreenState extends State<StatsScreen> {
     });
   }
 
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text("Stats")),
+//       body: Padding(
+//         padding: const EdgeInsets.all(5.0),
+//         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+//           TaskBarChart(tasks: tasks),
+//           StreakWidget(uniqueTasks: uniqueTasks, tasks: tasks),
+//         ]),
+//       ),
+//     );
+//   }
+// }
+
   @override
   Widget build(BuildContext context) {
-    print(uniqueTasks.length);
     return Scaffold(
-      appBar: AppBar(title: Text("Stats")),
-      body: Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // // 1. Wykres aktywności
-            // Text("Weekly Activity Chart",
-            //     style: Theme.of(context).textTheme.headlineMedium),
-            // SizedBox(height: 5),
-            // tasks.isEmpty
-            //     ? Center(child: CircularProgressIndicator())
-            //     : AspectRatio(
-            //         aspectRatio: 1.5,
-            //         child: LineChart(
-            //           LineChartData(
-            //             gridData: FlGridData(show: false),
-            //             titlesData: FlTitlesData(show: true),
-            //             borderData: FlBorderData(show: true),
-            //             lineBarsData: [
-            //               LineChartBarData(
-            //                 spots: _generateActivityChartData(),
-            //                 isCurved: true,
-
-            //                 //color: blue
-            //                 belowBarData: BarAreaData(show: false),
-            //               ),
-            //             ],
-            //           ),
-            //         ),
-            //       ),
-            // SizedBox(height: 16),
-
-            // 2. Streak dla powtarzającego się zadania
-            Text("Streak", style: Theme.of(context).textTheme.headlineMedium),
-            SizedBox(height: 8),
-            uniqueTasks.isEmpty
-                ? Center(child: CircularProgressIndicator())
-                : Column(
-                    children: uniqueTasks.map((task) {
-                      int streak = _calculateStreak(task);
-                      return ListTile(
-                        title: Text(task.name),
-                        subtitle: Text("Streak: $streak days"),
-                      );
-                    }).toList(),
-                  ),
-          ],
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: 600.0, // Ustal wysokość wykresu
+              floating: false, // Chcemy, żeby AppBar się zwijał
+              pinned: true, // Trzymamy AppBar na górze
+              flexibleSpace: FlexibleSpaceBar(
+                // title: Text("Stats"),
+                background:
+                    TaskBarChart(tasks: tasks), // Wykres, który się chowa
+              ),
+            ),
+          ];
+        },
+        body: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Streak",
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineMedium, // Możesz zmienić styl tytułu, np. headline6
+              ),
+              SizedBox(height: 8),
+              StreakWidget(
+                uniqueTasks: uniqueTasks,
+                tasks: tasks,
+              ),
+            ],
+          ),
         ),
       ),
     );
