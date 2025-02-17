@@ -1,60 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/calendar_screen.dart';
-import 'screens/tasks_screen.dart';
-import 'screens/settings_screen.dart';
+import 'models/task.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'providers/theme_provider.dart';
+import 'package:provider/provider.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // await Hive.initFlutter();
+  // Hive.registerAdapter(TaskAdapter());
+  // // await Hive.deleteBoxFromDisk('tasks');
+
+  // await Hive.openBox<Task>('tasks'); // Open db
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: MyApp(
+        initialRoute:
+            FirebaseAuth.instance.currentUser == null ? "/login" : "/home",
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  static final List<Widget> _screens = [
-    CalendarScreen(),
-    TasksScreen(),
-    SettingsScreen(),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
+  final String initialRoute;
+  MyApp({required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Routine Tracker")),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today), label: 'Calendar'),
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tasks'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.pink,
-        onTap: _onItemTapped,
-      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Routine Tracker',
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: themeProvider.themeMode, // Ustawiamy motyw
+          initialRoute: initialRoute, // Ustawiamy initialRoute
+          routes: {
+            "/login": (context) => LoginScreen(),
+            "/home": (context) => HomeScreen(),
+          },
+        );
+      },
     );
   }
 }
