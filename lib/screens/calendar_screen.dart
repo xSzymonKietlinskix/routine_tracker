@@ -66,6 +66,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     builder: (context, tasksByDate, _) {
                       return TableCalendar(
                         calendarStyle: CalendarStyle(
+                          selectedDecoration: BoxDecoration(
+                            color: Color.fromARGB(185, 131, 31, 162),
+                            shape: BoxShape.circle,
+                          ),
                           defaultTextStyle: TextStyle(
                             color: Theme.of(context).brightness ==
                                     Brightness.dark
@@ -125,15 +129,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AddTaskScreen()),
-          );
-        },
-        child: Icon(Icons.add),
-        backgroundColor: Colors.purple,
-      ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddTaskScreen()),
+            );
+          },
+          child: Icon(Icons.add),
+          backgroundColor: Color.fromARGB(185, 131, 31, 162)),
     );
   }
 }

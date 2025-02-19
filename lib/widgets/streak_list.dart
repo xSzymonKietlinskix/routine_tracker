@@ -47,19 +47,36 @@ class StreakWidget extends StatelessWidget {
       return Center(child: CircularProgressIndicator());
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Text("Streak", style: Theme.of(context).textTheme.headlineMedium),
-        SizedBox(height: 8),
-        ...uniqueTasks.map((task) {
-          int streak = _calculateStreak(task);
-          return ListTile(
-            title: Text(task.name),
-            subtitle: Text("Streak: $streak days"),
-          );
-        }).toList(),
-      ],
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 50), // Odsunięcie od boków
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 8),
+          ...uniqueTasks.map((task) {
+            int streak = _calculateStreak(task);
+            return Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(task.name, style: TextStyle(fontSize: 18)),
+                    Row(
+                      children: [
+                        Icon(Icons.local_fire_department, color: Colors.orange),
+                        SizedBox(width: 4),
+                        Text("$streak days"),
+                      ],
+                    ),
+                  ],
+                ),
+                Divider(), // Linia oddzielająca taski
+              ],
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 }

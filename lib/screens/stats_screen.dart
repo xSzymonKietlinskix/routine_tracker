@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../db/firestore_db.dart';
 import '../widgets/chart.dart';
 import '../widgets/streak_list.dart';
+import '../widgets/animated_streak.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({Key? key}) : super(key: key);
@@ -34,34 +35,48 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   // Funkcja do generowania wykresu aktywności w ostatnim tygodniu
-  List<FlSpot> _generateActivityChartData() {
+  List<Map<String, int>> generateActivityChartData() {
+    DateTime now = DateTime.now();
+    DateTime startDate =
+        DateTime(now.year, now.month, now.day - 6, 0, 0, 1); // 7 dni wstecz
+    DateTime endDate =
+        DateTime(now.year, now.month, now.day, 23, 59, 59); // Dziś wieczór
+
     Map<DateTime, int> taskCount = {};
     Map<DateTime, int> completedTaskCount = {};
 
-    DateTime oneWeekAgo = DateTime.now().subtract(Duration(days: 7));
-    for (var task in tasks) {
-      if (task.date != null && task.date!.isAfter(oneWeekAgo)) {
-        DateTime taskDate =
-            DateTime(task.date!.year, task.date!.month, task.date!.day);
-        taskCount[taskDate] = (taskCount[taskDate] ?? 0) + 1;
-        if (task.isCompleted) {
-          completedTaskCount[taskDate] =
-              (completedTaskCount[taskDate] ?? 0) + 1;
-        }
+    // Inicjalizacja map dla każdego dnia z przedziału
+    for (int i = 0; i < 7; i++) {
+      DateTime day = startDate.add(Duration(days: i));
+      taskCount[day] = 0;
+      completedTaskCount[day] = 0;
+    }
+
+    // Zliczanie tasków
+    for (var t in tasks) {
+      if (t.date == null) continue; // Bezpieczne sprawdzenie
+      DateTime taskDate =
+          DateTime(t.date!.year, t.date!.month, t.date!.day, 0, 0, 1);
+
+      if (taskDate.isBefore(startDate) || taskDate.isAfter(endDate)) continue;
+
+      taskCount.update(taskDate, (value) => value + 1);
+      if (t.isCompleted) {
+        completedTaskCount.update(taskDate, (value) => value + 1);
       }
     }
 
-    // Generujemy dane do wykresu
-    List<FlSpot> spots = [];
+    // Konwersja do listy
+    List<Map<String, int>> taskData = [];
     for (int i = 0; i < 7; i++) {
-      DateTime date = DateTime.now().subtract(Duration(days: i));
-      int totalTasks = taskCount[date] ?? 0;
-      int completedTasks = completedTaskCount[date] ?? 0;
-      spots.add(FlSpot(i.toDouble(), totalTasks.toDouble()));
-      spots.add(FlSpot(i.toDouble(), completedTasks.toDouble()));
+      DateTime day = startDate.add(Duration(days: i));
+      taskData.add({
+        'total': taskCount[day] ?? 0,
+        'done': completedTaskCount[day] ?? 0,
+      });
     }
 
-    return spots;
+    return taskData;
   }
 
   Future<void> findUniqueTasks() async {
@@ -80,21 +95,6 @@ class _StatsScreenState extends State<StatsScreen> {
     });
   }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text("Stats")),
-//       body: Padding(
-//         padding: const EdgeInsets.all(5.0),
-//         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-//           TaskBarChart(tasks: tasks),
-//           StreakWidget(uniqueTasks: uniqueTasks, tasks: tasks),
-//         ]),
-//       ),
-//     );
-//   }
-// }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,8 +107,9 @@ class _StatsScreenState extends State<StatsScreen> {
               pinned: true, // Trzymamy AppBar na górze
               flexibleSpace: FlexibleSpaceBar(
                 // title: Text("Stats"),
-                background:
-                    TaskBarChart(tasks: tasks), // Wykres, który się chowa
+                background: TaskBarChart(
+                    taskData:
+                        generateActivityChartData()), // Wykres, który się chowa
               ),
             ),
           ];
@@ -118,12 +119,7 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Streak",
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium, // Możesz zmienić styl tytułu, np. headline6
-              ),
+              AnimatedStreakText(),
               SizedBox(height: 8),
               StreakWidget(
                 uniqueTasks: uniqueTasks,

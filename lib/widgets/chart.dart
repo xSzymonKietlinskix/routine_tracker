@@ -4,20 +4,9 @@ import 'package:intl/intl.dart';
 import '../models/task.dart';
 
 class TaskBarChart extends StatelessWidget {
+  final List<Map<String, int>> taskData;
 
-   final List<Task> tasks;
-
-  TaskBarChart({super.key, required this.tasks});
-
-  final List<Map<String, int>> taskData = [
-    {'total': 10, 'done': 7},
-    {'total': 8, 'done': 6},
-    {'total': 12, 'done': 9},
-    {'total': 9, 'done': 5},
-    {'total': 11, 'done': 8},
-    {'total': 7, 'done': 3},
-    {'total': 15, 'done': 12},
-  ];
+  TaskBarChart({super.key, required this.taskData});
 
   List<String> getWeekDays() {
     return List.generate(7, (index) {
@@ -32,11 +21,19 @@ class TaskBarChart extends StatelessWidget {
     bool isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     Color textColor = isDarkTheme ? Colors.white70 : Colors.purple.shade900;
 
+    // Obliczanie maxY na podstawie danych (największa wartość + 2)
+    int maxTaskCount = taskData.fold<int>(0, (max, data) {
+      int total = data['total'] ?? 0;
+      return total > max ? total : max;
+    });
+
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: isDarkTheme ? Colors.black54 : Colors.white10,
+            color: isDarkTheme
+                ? const Color.fromARGB(211, 33, 33, 34)
+                : Color.fromARGB(255, 247, 243, 248),
             borderRadius: BorderRadius.circular(16),
           ),
           padding: EdgeInsets.all(16),
@@ -47,12 +44,12 @@ class TaskBarChart extends StatelessWidget {
                 barGroups: List.generate(taskData.length, (index) {
                   return BarChartGroupData(
                     x: index,
-                    barsSpace: 6,
+                    barsSpace: 2,
                     barRods: [
                       BarChartRodData(
                         toY: taskData[index]['total']!.toDouble(),
                         color: Colors.purple.shade200,
-                        width: 25,
+                        width: 30,
                         borderRadius: BorderRadius.circular(7),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
@@ -63,7 +60,7 @@ class TaskBarChart extends StatelessWidget {
                       BarChartRodData(
                         toY: taskData[index]['done']!.toDouble(),
                         color: Colors.purple.shade700,
-                        width: 25,
+                        width: 30,
                         borderRadius: BorderRadius.circular(7),
                       ),
                     ],
@@ -73,16 +70,22 @@ class TaskBarChart extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 30,
+                      reservedSize: 40, // Zwiększenie przestrzeni na osi Y
                       getTitlesWidget: (value, meta) {
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Text(
                             value.toInt().toString(),
-                            style: TextStyle(fontSize: 12, color: textColor),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight:
+                                  FontWeight.bold, // Pogrubienie czcionki
+                              color: textColor,
+                            ),
                           ),
                         );
                       },
+                      interval: 1, // Ustawienie odstępu na osi Y co 1
                     ),
                   ),
                   rightTitles:
@@ -95,7 +98,12 @@ class TaskBarChart extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8.0),
                           child: Text(
                             labels[value.toInt()],
-                            style: TextStyle(fontSize: 12, color: textColor),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight:
+                                  FontWeight.bold, // Pogrubienie czcionki
+                              color: textColor,
+                            ),
                           ),
                         );
                       },
@@ -127,7 +135,8 @@ class TaskBarChart extends StatelessWidget {
                   ),
                 ),
                 alignment: BarChartAlignment.spaceAround,
-                maxY: 20,
+                maxY: (maxTaskCount + 1)
+                    .toDouble(), // Dynamiczne dopasowanie maxY
               ),
               duration: Duration(milliseconds: 600),
               curve: Curves.easeInOut,
@@ -152,7 +161,14 @@ class TaskBarChart extends StatelessWidget {
       children: [
         Container(width: 14, height: 14, color: color),
         SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 12, color: textColor)),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold, // Pogrubienie czcionki w legendzie
+            color: textColor,
+          ),
+        ),
       ],
     );
   }

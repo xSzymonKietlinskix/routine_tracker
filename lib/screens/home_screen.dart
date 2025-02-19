@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'calendar_screen.dart';
 import 'settings_screen.dart';
 import 'stats_screen.dart';
+import '../widgets/app_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Routine Tracker")),
+      appBar: CustomAppBar(),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

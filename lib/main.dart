@@ -44,7 +44,26 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           title: 'Routine Tracker',
-          theme: ThemeData.light(),
+          // theme: ThemeData.light(),
+          theme: ThemeData(
+            primarySwatch: Colors.purple,
+            scaffoldBackgroundColor:
+                const Color.fromARGB(255, 247, 243, 248), // Tło aplikacji
+            textTheme: TextTheme(
+              bodySmall:
+                  TextStyle(fontFamily: 'Atkinson Hyperlegible', fontSize: 16),
+              bodyMedium:
+                  TextStyle(fontFamily: 'Atkinson Hyperlegible', fontSize: 16),
+              headlineMedium: TextStyle(
+                  fontFamily: 'Atkinson Hyperlegible',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32),
+              headlineSmall: TextStyle(
+                  fontFamily: 'Atkinson Hyperlegible',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28),
+            ),
+          ),
           darkTheme: ThemeData.dark(),
           themeMode: themeProvider.themeMode, // Ustawiamy motyw
           initialRoute: initialRoute, // Ustawiamy initialRoute
