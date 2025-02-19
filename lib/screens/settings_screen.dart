@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/theme_provider.dart';
 import '../auth/auth_service.dart';
 import '../providers/notifications_android.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -21,6 +22,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadNotificationTimes();
+  }
+
+  void showTestNotification() async {
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'test_channel',
+      'Test Channel',
+      icon: 'ic_notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // ID powiadomienia
+      'Test Powiadomienie', // Tytuł
+      'Działa poprawnie?', // Treść
+      platformChannelSpecifics,
+    );
   }
 
   Future<void> _loadNotificationTimes() async {
@@ -111,6 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // showTestNotification();
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(

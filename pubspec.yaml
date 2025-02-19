@@ -48,6 +48,7 @@ dependencies:
   fl_chart: ^0.70.2
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.0
+  permission_handler: ^11.3.1
 
 # dependencies:
 #   flutter:
@@ -55,6 +56,7 @@ dependencies:
 #
 
 dev_dependencies:
+  android_notification_icons: ^0.0.1
   hive_generator: ^2.0.1
   flutter_test:
     sdk: flutter

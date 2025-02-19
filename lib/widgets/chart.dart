@@ -49,7 +49,7 @@ class TaskBarChart extends StatelessWidget {
                       BarChartRodData(
                         toY: taskData[index]['total']!.toDouble(),
                         color: Colors.purple.shade200,
-                        width: 30,
+                        width: 13,
                         borderRadius: BorderRadius.circular(7),
                         backDrawRodData: BackgroundBarChartRodData(
                           show: true,
@@ -60,7 +60,7 @@ class TaskBarChart extends StatelessWidget {
                       BarChartRodData(
                         toY: taskData[index]['done']!.toDouble(),
                         color: Colors.purple.shade700,
-                        width: 30,
+                        width: 13,
                         borderRadius: BorderRadius.circular(7),
                       ),
                     ],
@@ -99,9 +99,9 @@ class TaskBarChart extends StatelessWidget {
                           child: Text(
                             labels[value.toInt()],
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight:
-                                  FontWeight.bold, // Pogrubienie czcionki
+                              fontSize: 8,
+                              // fontWeight:
+                              //     FontWeight.bold, // Pogrubienie czcionki
                               color: textColor,
                             ),
                           ),
@@ -115,13 +115,14 @@ class TaskBarChart extends StatelessWidget {
                 borderData: FlBorderData(show: false),
                 gridData: FlGridData(
                   show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.purple.shade100,
-                      strokeWidth: 1,
-                    );
-                  },
+                  drawVerticalLine: true,
+                  drawHorizontalLine: false,
+                  // getDrawingHorizontalLine: (value) {
+                  //   return FlLine(
+                  //     color: Colors.purple.shade100,
+                  //     strokeWidth: 1,
+                  //   );
+                  // },
                 ),
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(

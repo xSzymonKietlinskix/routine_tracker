@@ -102,14 +102,19 @@ class _StatsScreenState extends State<StatsScreen> {
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 600.0, // Ustal wysokość wykresu
+              expandedHeight: MediaQuery.of(context).size.height * 0.5,
+
               floating: false, // Chcemy, żeby AppBar się zwijał
               pinned: true, // Trzymamy AppBar na górze
               flexibleSpace: FlexibleSpaceBar(
                 // title: Text("Stats"),
-                background: TaskBarChart(
-                    taskData:
-                        generateActivityChartData()), // Wykres, który się chowa
+
+                background: Column(
+                  children: [
+                    SizedBox(height: 20.0), // Pusty box jako odstęp
+                    TaskBarChart(taskData: generateActivityChartData()),
+                  ],
+                ), // Wykres, który się chowa
               ),
             ),
           ];

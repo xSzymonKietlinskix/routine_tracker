@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter/services.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -17,9 +18,10 @@ Future<void> scheduleNotification(
         'Codzienne powiadomienia',
         importance: Importance.high,
         priority: Priority.high,
+        icon: 'ic_notifications',
       ),
     ),
-    androidScheduleMode: AndroidScheduleMode.inexact,
+    androidScheduleMode: AndroidScheduleMode.exact,
     matchDateTimeComponents: DateTimeComponents.time,
     uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime,
