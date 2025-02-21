@@ -47,10 +47,14 @@ class TaskList extends StatelessWidget {
           return Task.fromMap(doc.data() as Map<String, dynamic>);
         }).toList();
 
-        var oneTimeTasks = allTasks.where((task) => !task.recurring).toList();
-        var recurringTasks = allTasks.where((task) => task.recurring).toList();
+        var oneTimeTasks = allTasks.where((task) => !task.recurring).toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+
+        var recurringTasks = allTasks.where((task) => task.recurring).toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
 
         return ListView(
+          shrinkWrap: true,
           children: [
             if (oneTimeTasks.isNotEmpty) ...[
               Padding(

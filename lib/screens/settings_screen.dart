@@ -24,30 +24,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadNotificationTimes();
   }
 
-  void showTestNotification() async {
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'test_channel',
-      'Test Channel',
-      icon: 'ic_notifications',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.show(
-      0, // ID powiadomienia
-      'Test Powiadomienie', // Tytuł
-      'Działa poprawnie?', // Treść
-      platformChannelSpecifics,
-    );
-  }
-
   Future<void> _loadNotificationTimes() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -102,13 +78,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }, SetOptions(merge: true));
 
-    scheduleNotification(
-        type == 'morning' ? 'Dzień dobry!' : 'Zanim pójdziesz spać...',
-        type == 'morning'
-            ? 'Sprawdź co dziś na ciebie czeka!'
-            : 'Czy zrobiłeś już wszystkie zadania?',
-        time.hour,
-        time.minute);
+    // scheduleNotification(
+    //     type == 'morning' ? 'Dzień dobry!' : 'Zanim pójdziesz spać...',
+    //     type == 'morning'
+    //         ? 'Sprawdź co dziś na ciebie czeka!'
+    //         : 'Czy zrobiłeś już wszystkie zadania?',
+    //     time.hour,
+    //     time.minute);
+    NotificationService.scheduleDailyNotification(time.hour, time.minute);
+    // NotificationService.scheduleDailyNotification(eveningTime['hour'], eveningTime['minute']);
   }
 
   Future<void> _pickTime(BuildContext context, String type) async {

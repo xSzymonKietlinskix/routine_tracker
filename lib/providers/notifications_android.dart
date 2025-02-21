@@ -1,39 +1,51 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter/services.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+class NotificationService {
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-Future<void> scheduleNotification(
-    String title, String text, int hour, int minute) async {
-  await flutterLocalNotificationsPlugin.zonedSchedule(
-    0,
-    title,
-    text,
-    _nextInstanceOfTime(hour, minute),
-    const NotificationDetails(
-      android: AndroidNotificationDetails(
-        'daily_notification_channel',
-        'Codzienne powiadomienia',
-        importance: Importance.high,
-        priority: Priority.high,
-        icon: 'ic_notifications',
-      ),
-    ),
-    androidScheduleMode: AndroidScheduleMode.exact,
-    matchDateTimeComponents: DateTimeComponents.time,
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
-  );
-}
+  static Future<void> initialize() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
-  final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-  tz.TZDateTime scheduledDate =
-      tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-  if (scheduledDate.isBefore(now)) {
-    scheduledDate = scheduledDate.add(Duration(days: 1));
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
-  return scheduledDate;
+
+  static Future<void> scheduleDailyNotification(int hour, int minute) async {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Tytuł powiadomienia',
+      'Treść powiadomienia',
+      _nextInstanceOfTime(hour, minute),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_notification_channel',
+          'Codzienne Powiadomienia',
+          channelDescription: 'Kanał dla codziennych powiadomień',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.wallClockTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduleTime =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduleTime.isBefore(now)) {
+      scheduleTime = scheduleTime.add(const Duration(days: 1));
+    }
+    return scheduleTime;
+  }
 }

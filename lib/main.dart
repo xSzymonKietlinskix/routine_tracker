@@ -14,30 +14,22 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-Future<void> requestNotificationPermission() async {
-  if (await Permission.notification.request().isGranted) {
-    print("Powiadomienia są dozwolone");
-  } else {
-    print("Powiadomienia odrzucone");
-  }
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
 
-  await requestNotificationPermission();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  MyApp app = MyApp(
+      initialRoute:
+          FirebaseAuth.instance.currentUser == null ? "/login" : "/home");
+  await app.setupNotifications();
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
-      child: MyApp(
-        initialRoute:
-            FirebaseAuth.instance.currentUser == null ? "/login" : "/home",
-      ),
+      child: app,
     ),
   );
 }
@@ -48,40 +40,8 @@ class MyApp extends StatelessWidget {
   final String initialRoute;
   MyApp({required this.initialRoute});
 
-  void _setupNotifications() async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'daily_notification_channel',
-      'Codzienne powiadomienia',
-      channelDescription: 'Kanał dla codziennych powiadomień',
-      importance: Importance.high,
-      priority: Priority.high,
-      icon: 'ic_notifications', // Ikona powiadomienia
-    );
-
-    const NotificationDetails platformDetails =
-        NotificationDetails(android: androidDetails);
-
-    await flutterLocalNotificationsPlugin.initialize(
-      InitializationSettings(
-          android: AndroidInitializationSettings('ic_notifications')),
-    );
-
-    // Tworzenie kanału
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(const AndroidNotificationChannel(
-          'daily_notification_channel',
-          'Codzienne powiadomienia',
-          description: 'Kanał dla codziennych powiadomień',
-          importance: Importance.high,
-        ));
-  }
-
   @override
   Widget build(BuildContext context) {
-    _setupNotifications();
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
@@ -116,5 +76,25 @@ class MyApp extends StatelessWidget {
         );
       },
     );
+  }
+
+  // Funkcja inicjalizująca powiadomienia (teraz już w niestatycznej metodzie)
+  Future<void> initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  // Usuwamy static z tej funkcji i wywołujemy ją na instancji klasy
+  Future<void> setupNotifications() async {
+    await Permission.notification
+        .request(); // Zapytanie o pozwolenie na powiadomienia
+    await initializeNotifications(); // Wywołanie metody niestatycznej
   }
 }

@@ -139,25 +139,27 @@ class _AddTaskScreen extends State<AddTaskScreen> {
               ],
               SizedBox(
                   height: 16), // Dodajemy przestrzeń po polu wyboru miesięcy
-              ListTile(
-                title: Text("Select Date"),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2025, 12, 31),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _date = pickedDate;
-                    });
-                  }
-                },
-                trailing: Text(_date != null
-                    ? "${_date!.toLocal()}".split(' ')[0]
-                    : "Pick Date"),
-              ),
+              if (!_recurring) ...[
+                ListTile(
+                  title: Text("Select Date"),
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2025, 12, 31),
+                    );
+                    if (pickedDate != null) {
+                      setState(() {
+                        _date = pickedDate;
+                      });
+                    }
+                  },
+                  trailing: Text(_date != null
+                      ? "${_date!.toLocal()}".split(' ')[0]
+                      : "Pick Date"),
+                ),
+              ],
               SizedBox(height: 16), // Dodajemy przestrzeń po dacie
               ElevatedButton(
                 onPressed: _saveTask,

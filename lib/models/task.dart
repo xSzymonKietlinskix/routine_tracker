@@ -76,6 +76,9 @@ class Task {
   }
 
   DateTime _getNextDayOfWeek(DateTime startOfMonth, int targetWeekday) {
+    if (startOfMonth.weekday == targetWeekday) {
+      return startOfMonth;
+    }
     int daysToAdd = (targetWeekday - startOfMonth.weekday + 7) % 7;
     // Jeśli obliczona data jest wstecz, to bierzemy kolejny tydzień
     if (daysToAdd == 0) {
