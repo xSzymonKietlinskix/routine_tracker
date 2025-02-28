@@ -26,6 +26,8 @@ class DefaultFirebaseOptions {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
+      case TargetPlatform.windows:
+        return windows;
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for ios - '
@@ -34,11 +36,6 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
@@ -69,4 +66,13 @@ class DefaultFirebaseOptions {
       messagingSenderId: "315745699169",
       appId: "1:315745699169:web:e7b796dfe37dbaef153120",
       measurementId: "G-E9ENJB8MTZ");
+
+  static const FirebaseOptions windows = FirebaseOptions(
+      apiKey: "AIzaSyCOaFdf3WYObxPRf0YSOr8Qm3bCBVhctjA",
+      authDomain: "routine-tracker-db987.firebaseapp.com",
+      projectId: "routine-tracker-db987",
+      storageBucket: "routine-tracker-db987.firebasestorage.app",
+      messagingSenderId: "315745699169",
+      appId: "1:315745699169:web:49482da76d34cca9153120",
+      measurementId: "G-JBGG513FDR");
 }

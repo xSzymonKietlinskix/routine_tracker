@@ -31,9 +31,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     Map<DateTime, List<Task>> newTasksByDate = {};
 
     int tasks_to_be_done_counter = 0;
-
+    DateTime _today = DateTime.now();
     for (var task in tasks) {
-      if (!task.isCompleted) {
+      if (!task.isCompleted && isSameDay(task.date, _today)) {
         tasks_to_be_done_counter++;
       }
       DateTime taskDate = DateTime(
