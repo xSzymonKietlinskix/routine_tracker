@@ -1,9 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Uprawnienia -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+<uses-permission android:name="android.permission.VIBRATE" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
 
     <application
@@ -11,24 +10,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- Odbiorniki powiadomień -->
-        <receiver 
-            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" 
-            android:exported="true"/>
-        
-        <receiver 
-            android:name="com.dexterous.flutterlocalnotifications.ActionReceiver" 
-            android:exported="true"/>
-        
-        <receiver 
-            android:name="com.dexterous.flutterlocalnotifications.RebootBroadcastReceiver" 
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
-
-        <!-- Główna aktywność aplikacji -->
+    
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -49,14 +31,19 @@
             </intent-filter>
         </activity>
 
-        <!-- Konfiguracja Fluttera -->
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+    	<receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+    android:exported="false">
+    	<intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+    	</intent-filter>
+    	</receiver>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
     </application>
 
-    <!-- Dodatkowe uprawnienia dla przetwarzania tekstu -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

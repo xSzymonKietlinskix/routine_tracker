@@ -78,14 +78,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }, SetOptions(merge: true));
 
-    // scheduleNotification(
-    //     type == 'morning' ? 'Dzień dobry!' : 'Zanim pójdziesz spać...',
-    //     type == 'morning'
-    //         ? 'Sprawdź co dziś na ciebie czeka!'
-    //         : 'Czy zrobiłeś już wszystkie zadania?',
-    //     time.hour,
-    //     time.minute);
-    NotificationService.scheduleDailyNotification(time.hour, time.minute);
+    NotificationService.scheduleDailyNotification(
+      time.hour,
+      time.minute,
+      type == 'morning' ? 'Dzień dobry!' : 'Zanim pójdziesz spać...',
+      type == 'morning'
+          ? 'Sprawdź co dziś na ciebie czeka!'
+          : 'Czy zrobiłeś już wszystkie zadania?',
+    );
+    // NotificationService.scheduleDailyNotification(time.hour, time.minute);
     // NotificationService.scheduleDailyNotification(eveningTime['hour'], eveningTime['minute']);
   }
 

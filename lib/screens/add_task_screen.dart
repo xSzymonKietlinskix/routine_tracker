@@ -3,7 +3,8 @@ import '../models/task.dart';
 import '../db/firestore_db.dart';
 
 class AddTaskScreen extends StatefulWidget {
-  const AddTaskScreen({super.key});
+  final DateTime selectedDate;
+  const AddTaskScreen({super.key, required this.selectedDate});
 
   @override
   _AddTaskScreen createState() => _AddTaskScreen();
@@ -21,6 +22,12 @@ class _AddTaskScreen extends State<AddTaskScreen> {
 
   // Utwórz obiekt FirestoreDb do dodawania zadań
   final FirestoreDb firestoreDb = FirestoreDb();
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.selectedDate;
+  }
 
   void _saveTask() async {
     // Tworzymy nowe zadanie
@@ -107,6 +114,7 @@ class _AddTaskScreen extends State<AddTaskScreen> {
                       selected: _daysOfWeek!.contains(index + 1),
                       onSelected: (isSelected) {
                         setState(() {
+                          _date = null;
                           if (isSelected) {
                             _daysOfWeek!.add(index + 1);
                           } else {

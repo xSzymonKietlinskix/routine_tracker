@@ -4,6 +4,7 @@ import 'add_task_screen.dart';
 import '../widgets/task_list.dart';
 import '../models/task.dart';
 import '../db/firestore_db.dart';
+import '../providers/notifications_android.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -29,15 +30,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final tasks = await firestoreDb.getTasks();
     Map<DateTime, List<Task>> newTasksByDate = {};
 
+    int tasks_to_be_done_counter = 0;
+
     for (var task in tasks) {
+      if (!task.isCompleted) {
+        tasks_to_be_done_counter++;
+      }
       DateTime taskDate = DateTime(
         task.date!.year,
         task.date!.month,
         task.date!.day,
       );
       newTasksByDate.putIfAbsent(taskDate, () => []).add(task);
+    }
 
-      _tasksByDate.value = newTasksByDate;
+    _tasksByDate.value = newTasksByDate;
+
+    if (tasks_to_be_done_counter > 0) {
+      await NotificationService.showPersistentNotification(
+          tasks_to_be_done_counter);
+    } else {
+      await NotificationService.cancelPersistentNotification();
     }
   }
 
@@ -132,7 +145,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AddTaskScreen()),
+              MaterialPageRoute(
+                  builder: (context) =>
+                      AddTaskScreen(selectedDate: _selectedDay)),
             );
           },
           child: Icon(Icons.add),
