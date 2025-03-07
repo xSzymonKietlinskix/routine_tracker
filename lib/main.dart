@@ -13,6 +13,25 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'providers/notifications_android.dart';
+import 'db/firestore_db.dart';
+import 'dart:async';
+
+void scheduleMidnightTask() {
+  final FirestoreDb firestoreDb = FirestoreDb();
+  DateTime now = DateTime.now();
+  DateTime nextMidnight = DateTime(now.year, now.month, now.day + 1, 0, 0, 0);
+
+  Duration initialDelay = nextMidnight.difference(now);
+
+  Future.delayed(initialDelay, () {
+    firestoreDb.getTasksToBeDoneForToday(); // Wywołanie funkcji o północy
+
+    Timer.periodic(Duration(days: 1), (timer) {
+      firestoreDb.getTasksToBeDoneForToday(); // Każdego dnia o północy
+    });
+  });
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +40,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Inicjalizacja powiadomień
+  await NotificationService.initialize();
+
+  // Nasłuchiwanie na zmiany w Firestore
+  NotificationService.listenForTaskUpdates();
 
   MyApp app = MyApp(
       initialRoute:
@@ -32,6 +57,9 @@ void main() async {
       child: app,
     ),
   );
+  FirestoreDb firestoreDb = FirestoreDb();
+  firestoreDb.getTasksToBeDoneForToday();                          
+  scheduleMidnightTask();
 }
 
 class MyApp extends StatelessWidget {

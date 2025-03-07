@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
 import 'dart:developer' as developer;
+import '../db/firestore_db.dart';
 
 class TaskList extends StatelessWidget {
   final DateTime selectedDate;
@@ -48,10 +49,38 @@ class TaskList extends StatelessWidget {
         }).toList();
 
         var oneTimeTasks = allTasks.where((task) => !task.recurring).toList()
-          ..sort((a, b) => a.name.compareTo(b.name));
+          ..sort((a, b) {
+            // Jeśli jedno z zadań nie ma priorytetu (np. null, 0, -1), traktuj je jako najniższy priorytet
+            int priorityA = a.priority ??
+                -1; // Jeżeli nie ma priorytetu, traktuj jako najniższy
+            int priorityB = b.priority ??
+                -1; // Jeżeli nie ma priorytetu, traktuj jako najniższy
+
+            // Najpierw sortowanie według priorytetu (od najwyższego do najniższego)
+            int priorityComparison = priorityB.compareTo(priorityA);
+            if (priorityComparison != 0) {
+              return priorityComparison;
+            }
+            // Jeśli priorytety są równe, sortowanie według nazwy
+            return a.name.compareTo(b.name);
+          });
 
         var recurringTasks = allTasks.where((task) => task.recurring).toList()
-          ..sort((a, b) => a.name.compareTo(b.name));
+          ..sort((a, b) {
+            // Jeśli jedno z zadań nie ma priorytetu (np. null, 0, -1), traktuj je jako najniższy priorytet
+            int priorityA = a.priority ??
+                -1; // Jeżeli nie ma priorytetu, traktuj jako najniższy
+            int priorityB = b.priority ??
+                -1; // Jeżeli nie ma priorytetu, traktuj jako najniższy
+
+            // Najpierw sortowanie według priorytetu (od najwyższego do najniższego)
+            int priorityComparison = priorityB.compareTo(priorityA);
+            if (priorityComparison != 0) {
+              return priorityComparison;
+            }
+            // Jeśli priorytety są równe, sortowanie według nazwy
+            return a.name.compareTo(b.name);
+          });
 
         return ListView(
           shrinkWrap: true,
@@ -182,6 +211,27 @@ class TaskList extends StatelessWidget {
           ),
           child: Text(task.name),
         ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (task.category != null)
+              Text(
+                task.category!,
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey[600],
+                ),
+              ),
+            if (task.priority != null)
+              Text(
+                'Priority: ${task.priority}',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey[600],
+                ),
+              ),
+          ],
+        ),
         trailing: Checkbox(
           value: task.isCompleted,
           onChanged: (bool? value) {
@@ -203,6 +253,9 @@ class TaskList extends StatelessWidget {
           .where('name', isEqualTo: task.name)
           .where('date', isEqualTo: _date)
           .get();
+
+      FirestoreDb firestoreDb = FirestoreDb();
+      firestoreDb.getTasksToBeDoneForToday();
 
       if (taskDoc.docs.isNotEmpty) {
         // Aktualizujemy zadanie
@@ -227,6 +280,9 @@ Future<void> _deleteSingleTask(String userId, Task task) async {
         .where('date', isEqualTo: _date)
         .get();
 
+    FirestoreDb firestoreDb = FirestoreDb();
+    firestoreDb.getTasksToBeDoneForToday();
+
     if (taskDoc.docs.isNotEmpty) {
       await taskDoc.docs.first.reference.delete();
     }
@@ -247,6 +303,9 @@ Future<void> _deleteAllRerecurringTasks(String userId, Task task) async {
     for (var t in taskDoc.docs) {
       await t.reference.delete();
     }
+
+    FirestoreDb firestoreDb = FirestoreDb();
+    firestoreDb.getTasksToBeDoneForToday();
   } catch (e) {
     developer.log("Błąd usuwania zadań: $e", name: "TaskList");
   }

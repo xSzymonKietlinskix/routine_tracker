@@ -1,32 +1,11 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
-import 'dart:io';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-  static Future<void> checkAndRequestExactAlarms() async {
-    if (Platform.isAndroid) {
-      var status = await Permission.scheduleExactAlarm.status;
-      if (!status.isGranted) {
-        print("Brak pozwolenia na dokładne alarmy! Otwieranie ustawień...");
-        await openExactAlarmSettings();
-      }
-    }
-  }
-
-  static Future<void> openExactAlarmSettings() async {
-    final intent = AndroidIntent(
-      action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
-      flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
-    );
-    await intent.launch();
-  }
 
   static Future<void> initialize() async {
     tz.initializeTimeZones(); // Inicjalizacja stref czasowych
@@ -35,54 +14,17 @@ class NotificationService {
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     final InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
+        InitializationSettings(android: initializationSettingsAndroid);
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  static Future<void> scheduleDailyNotification(
-      int hour, int minute, String title, String text) async {
-    await checkAndRequestExactAlarms();
-    tz.TZDateTime scheduledTime = _nextInstanceOfTime(hour, minute);
-    print("Powiadomienie zaplanowane na: $scheduledTime");
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      title,
-      text,
-      scheduledTime,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'daily_notification_channel',
-          'Codzienne Powiadomienia',
-          channelDescription: 'Kanał dla codziennych powiadomień',
-          importance: Importance.max,
-          priority: Priority.high,
-          // sound: RawResourceAndroidNotificationSound('notification_sound'),
-          sound: null,
-          // icon:
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.wallClockTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
-
-  static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduleTime =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduleTime.isBefore(now)) {
-      scheduleTime = scheduleTime.add(const Duration(days: 1));
-    }
-    return scheduleTime;
-  }
-
   static Future<void> showPersistentNotification(int taskCount) async {
+    if (taskCount == 0) {
+      await cancelPersistentNotification();
+      return;
+    }
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'persistent_notification_channel',
@@ -90,25 +32,57 @@ class NotificationService {
       channelDescription: 'Kanał dla trwałego powiadomienia',
       importance: Importance.high,
       priority: Priority.high,
-      ongoing: true, // Powiadomienie nie może zostać usunięte ręcznie
-      autoCancel: false, // Nie zamyka się po kliknięciu
-      onlyAlertOnce: true, // Nie powiadamia dźwiękiem przy każdej aktualizacji
-      showWhen: false, // Ukrywa czas wysłania powiadomienia
+      ongoing:
+          true, // Powiadomienie trwałe (nie może zostać zignorowane przez użytkownika)
+      autoCancel: false, // Nie automatycznie znika
+      onlyAlertOnce: true, // Powiadomienie pokazuje się tylko raz
+      showWhen: false,
     );
 
     const NotificationDetails notificationDetails =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      1, // ID powiadomienia, aby aktualizować zamiast tworzyć nowe
-      'Twoje zadania',
-      'Pozostało $taskCount zadań do wykonania',
+      1, // Identyfikator powiadomienia
+      'Your tasks',
+      taskCount == 1
+          ? '1 task to be done today'
+          : '$taskCount tasks to be done today',
       notificationDetails,
     );
   }
 
-// Metoda do usunięcia powiadomienia (jeśli wszystkie zadania są wykonane)
   static Future<void> cancelPersistentNotification() async {
-    await flutterLocalNotificationsPlugin.cancel(1);
+    await flutterLocalNotificationsPlugin.cancel(1); // Usuwamy powiadomienie
+  }
+
+  // Nasłuchiwanie zmian w Firestore i aktualizacja powiadomienia
+  static void listenForTaskUpdates() {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      print("No user is logged in");
+      return;
+    }
+
+    String userId = currentUser.uid;
+    print("User is logged in with UID: $userId");
+
+    // Subskrypcja na zmiany w dokumencie tasksForToday
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('info')
+        .doc('tasksForToday')
+        .snapshots()
+        .listen((DocumentSnapshot snapshot) {
+      if (snapshot.exists) {
+        // Bezpieczne pobranie wartości 'taskCount' z dokumentu, domyślna wartość to 0
+        int taskCount = snapshot.get('count') ?? 0;
+        print("Task count updated: $taskCount");
+        showPersistentNotification(taskCount); // Zaktualizuj powiadomienie
+      } else {
+        print("Document does not exist");
+      }
+    });
   }
 }

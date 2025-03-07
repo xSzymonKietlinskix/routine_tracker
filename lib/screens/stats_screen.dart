@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 import '../models/task.dart';
 import '../db/firestore_db.dart';
 import '../widgets/chart.dart';

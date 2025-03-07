@@ -3,8 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'add_task_screen.dart';
 import '../widgets/task_list.dart';
 import '../models/task.dart';
-import '../db/firestore_db.dart';
-import '../providers/notifications_android.dart';
+import '../services/task_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -18,7 +17,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDay = DateTime.now();
   ValueNotifier<Map<DateTime, List<Task>>> _tasksByDate = ValueNotifier({});
 
-  final FirestoreDb firestoreDb = FirestoreDb();
+  final TaskService taskService = TaskService();
 
   @override
   void initState() {
@@ -27,31 +26,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   void _loadTasks() async {
-    final tasks = await firestoreDb.getTasks();
-    Map<DateTime, List<Task>> newTasksByDate = {};
-
-    int tasks_to_be_done_counter = 0;
-    DateTime _today = DateTime.now();
-    for (var task in tasks) {
-      if (!task.isCompleted && isSameDay(task.date, _today)) {
-        tasks_to_be_done_counter++;
-      }
-      DateTime taskDate = DateTime(
-        task.date!.year,
-        task.date!.month,
-        task.date!.day,
-      );
-      newTasksByDate.putIfAbsent(taskDate, () => []).add(task);
-    }
-
-    _tasksByDate.value = newTasksByDate;
-
-    if (tasks_to_be_done_counter > 0) {
-      await NotificationService.showPersistentNotification(
-          tasks_to_be_done_counter);
-    } else {
-      await NotificationService.cancelPersistentNotification();
-    }
+    _tasksByDate.value = await taskService.getTasksByDate();
   }
 
   bool _hasTasks(DateTime day) {
@@ -86,10 +61,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           defaultTextStyle: TextStyle(
                             color: Theme.of(context).brightness ==
                                     Brightness.dark
-                                ? Colors
-                                    .white // Kolor tekstu dni w ciemnym motywie
-                                : Colors
-                                    .black, // Kolor tekstu dni w jasnym motywie
+                                ? Colors.white
+                                : Colors.black,
                           ),
                           weekendTextStyle: TextStyle(
                             color:

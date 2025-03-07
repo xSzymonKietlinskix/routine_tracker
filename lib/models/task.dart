@@ -10,6 +10,8 @@ class Task {
   bool isCompleted;
   int streak;
   int? recurringMonths;
+  String? category; // Nowe pole kategorii (opcjonalne)
+  int? priority; // Nowe pole istotności (opcjonalne)
 
   Task({
     required this.name,
@@ -20,6 +22,8 @@ class Task {
     this.streak = 0,
     this.isCompleted = false,
     this.recurringMonths,
+    this.category, // Opcjonalne
+    this.priority, // Opcjonalne
   });
 
   factory Task.fromMap(Map<String, dynamic> map) {
@@ -29,11 +33,13 @@ class Task {
       date: (map['date'] as Timestamp?)?.toDate(),
       daysOfWeek: List<int>.from(map['daysOfWeek'] ?? []),
       time: map['time'] != null
-          ? TimeOfDay(hour: map['time'].hour, minute: map['time'].minute)
+          ? TimeOfDay(hour: map['time']['hour'], minute: map['time']['minute'])
           : null,
-      isCompleted: map['isCompleted'],
-      streak: map['streak'],
+      isCompleted: map['isCompleted'] ?? false,
+      streak: map['streak'] ?? 0,
       recurringMonths: map['recurringMonths'],
+      category: map['category'], // Odczyt kategorii
+      priority: map['priority'], // Odczyt istotności
     );
   }
 
@@ -46,6 +52,9 @@ class Task {
           time != null ? {'hour': time!.hour, 'minute': time!.minute} : null,
       'isCompleted': isCompleted,
       'streak': streak,
+      'recurringMonths': recurringMonths,
+      'category': category, // Zapis kategorii
+      'priority': priority, // Zapis istotności
     };
   }
 
@@ -65,8 +74,7 @@ class Task {
           DateTime nextDayOfWeek = _getNextDayOfWeek(monthStart, dayOfWeek);
           while (nextDayOfWeek.month == monthStart.month) {
             generatedDates.add(nextDayOfWeek);
-            nextDayOfWeek = nextDayOfWeek.add(Duration(
-                days: 7)); // Dodajemy kolejne wystąpienie w tym miesiącu
+            nextDayOfWeek = nextDayOfWeek.add(Duration(days: 7));
           }
         }
       }
@@ -80,7 +88,6 @@ class Task {
       return startOfMonth;
     }
     int daysToAdd = (targetWeekday - startOfMonth.weekday + 7) % 7;
-    // Jeśli obliczona data jest wstecz, to bierzemy kolejny tydzień
     if (daysToAdd == 0) {
       daysToAdd = 7;
     }

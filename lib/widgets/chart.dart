@@ -43,9 +43,9 @@ class TaskBarChart extends StatelessWidget {
               ),
               // Okno dialogowe
               DraggableScrollableSheet(
-                initialChildSize: 0.7, // Początkowa wysokość (70%)
-                maxChildSize: 0.9, // Maksymalna wysokość (90%)
-                minChildSize: 0.3, // Minimalna wysokość (30%)
+                initialChildSize: 1, // Początkowa wysokość (70%)
+                maxChildSize: 1, // Maksymalna wysokość (90%)
+                minChildSize: 1, // Minimalna wysokość (30%)
                 expand: true, // Nie wymusza pełnego rozszerzenia
                 builder: (context, _) {
                   return Container(
